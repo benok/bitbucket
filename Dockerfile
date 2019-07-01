@@ -13,7 +13,8 @@ ENV BITBUCKET_HOME=/var/atlassian/bitbucket \
     BITBUCKET_PROXY_SCHEME= \
     BITBUCKET_BACKUP_CLIENT=/opt/backupclient/bitbucket-backup-client \
     BITBUCKET_BACKUP_CLIENT_HOME=/opt/backupclient \
-    BITBUCKET_BACKUP_CLIENT_VERSION=300300300
+    BITBUCKET_BACKUP_CLIENT_VERSION=300300300 \
+    KEYSTORE=$JAVA_HOME/jre/lib/security/cacerts
 
 RUN export MYSQL_DRIVER_VERSION=5.1.47 && \
     export CONTAINER_USER=bitbucket &&  \
@@ -54,8 +55,8 @@ RUN export MYSQL_DRIVER_VERSION=5.1.47 && \
       -C /tmp && \
     cp /tmp/mysql-connector-java-${MYSQL_DRIVER_VERSION}/mysql-connector-java-${MYSQL_DRIVER_VERSION}-bin.jar     \
       ${BITBUCKET_INSTALL}/lib/mysql-connector-java-${MYSQL_DRIVER_VERSION}-bin.jar                                &&  \
+    chmod 644 ${KEYSTORE} && \
     # Adding letsencrypt-ca to truststore
-    export KEYSTORE=$JAVA_HOME/jre/lib/security/cacerts && \
     wget -P /tmp/ https://letsencrypt.org/certs/lets-encrypt-x1-cross-signed.der && \
     wget -P /tmp/ https://letsencrypt.org/certs/lets-encrypt-x2-cross-signed.der && \
     wget -P /tmp/ https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.der && \
@@ -66,10 +67,13 @@ RUN export MYSQL_DRIVER_VERSION=5.1.47 && \
     keytool -trustcacerts -keystore $KEYSTORE -storepass changeit -noprompt -importcert -alias letsencryptauthorityx4 -file /tmp/lets-encrypt-x4-cross-signed.der && \
     # Install atlassian ssl tool
     wget -O /home/${CONTAINER_USER}/SSLPoke.class https://confluence.atlassian.com/kb/files/779355358/779355357/1/1441897666313/SSLPoke.class && \
+    # Prepare cert import directory                         \
+    mkdir ${BITBUCKET_HOME}/certs                        && \
     # Container user permissions
     chown -R bitbucket:bitbucket /home/${CONTAINER_USER} && \
     chown -R bitbucket:bitbucket ${BITBUCKET_HOME} && \
-    chown -R bitbucket:bitbucket ${BITBUCKET_INSTALL}
+    chown -R bitbucket:bitbucket ${BITBUCKET_INSTALL} && \
+    chown bitbucket:bitbucket ${KEYSTORE}
 
 RUN mkdir -p ${BITBUCKET_BACKUP_CLIENT_HOME} && \
     wget -O /tmp/bitbucket-backup-distribution.zip \
