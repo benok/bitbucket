@@ -89,6 +89,19 @@ if [ -d /var/atlassian/bitbucket/ssh ]; then
   chmod -R 700 /home/bitbucket/.ssh
 fi
 
+# if there are any certificates that should be imported to the JVM Keystore,
+# import them.  Note that KEYSTORE is defined in the Dockerfile
+# (taken from https://github.com/teamatldocker/crowd/blob/master/imagescripts/docker-entrypoint.sh)
+if [ -d ${BITBUCKET_HOME}/certs ]; then
+  for c in ${BITBUCKET_HOME}/certs/* ; do
+    if [[ $c != "${BITBUCKET_HOME}/certs/*" ]]; then  # workaround for cert dir is empty
+      echo Found certificate $c, importing to JVM keystore
+      c_base=$(basename $c)
+      keytool -trustcacerts -keystore $KEYSTORE -storepass changeit -noprompt -importcert -alias $c_base -file $c || :
+    fi
+  done
+fi
+
 if [ "$1" = 'bitbucket' ] || [ "${1:0:1}" = '-' ]; then
   source /usr/bin/dockerwait
   umask 0027
