@@ -35,6 +35,7 @@ RUN export MYSQL_DRIVER_VERSION=5.1.48 && \
       git \
       perl \
       wget  \
+      sudo \
       ttf-dejavu \
       git-daemon \
       tini \
@@ -80,6 +81,8 @@ RUN mkdir -p ${BITBUCKET_BACKUP_CLIENT_HOME} && \
     unzip -d ${BITBUCKET_BACKUP_CLIENT_HOME} /tmp/bitbucket-backup-distribution.zip && \
     mv /opt/backupclient/$(ls /opt/backupclient/) /opt/backupclient/bitbucket-backup-client && \
     chown -R bitbucket:bitbucket ${BITBUCKET_BACKUP_CLIENT_HOME}
+
+RUN echo "bitbucket ALL=(ALL) NOPASSWD: /sbin/route" >> /etc/sudoers
 
 # Remove obsolete packages
 RUN apk del \
